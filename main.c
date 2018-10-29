@@ -2,35 +2,41 @@
 #include <string.h>
 #include <stdlib.h>
 #include <clang-c/Index.h>
-struct foo
+typedef struct foo
 {
     int f;
     int d;
-};
+} foo;
 
-struct foo eeeew = {0};
+foo eeeew = {0};
+foo* structpoint = 0;
+foo eeeewarray[512] = {0};
 int globalshit = 0;
 
+// get globals
 enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientData client_data)
 {
-    /*if(clang_getCursorKind(cursor) == CXCursor_VarDecl)*/
+    if(clang_getCursorKind(cursor) == CXCursor_VarDecl)
     {
         CXSourceLocation loc = clang_getCursorLocation(cursor);
         CXString filename;
-        clang_getPresumedLocation(loc, &filename, 0, 0);
+        unsigned int line;
+        unsigned int col;
+        clang_getPresumedLocation(loc, &filename, &line, &col);
         const char* f = clang_getCString(filename);
         const char* p = clang_getCString(clang_getCursorSpelling(parent));
 
         if(strcmp(f, "main.c") == 0 && strcmp(p, "main.c") == 0)
         {
-            printf("Cursor %s of kind %s %s parent:%s\n",
+            printf("global Type:%s Name:%s clangtype:%s src:%s:%i:%i\n",
+                   clang_getCString(clang_getTypeSpelling(clang_getCursorType(cursor))),
                    clang_getCString(clang_getCursorSpelling(cursor)),
                    clang_getCString(clang_getCursorKindSpelling(clang_getCursorKind(cursor))),
-                   clang_getCString(filename),
-                   clang_getCString(clang_getCursorSpelling(parent))
+                   clang_getCString(filename), line, col
                   );
         }
     }
+
     return CXChildVisit_Recurse;
 }
 
