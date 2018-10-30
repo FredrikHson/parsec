@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <clang-c/Index.h>
+#include <unistd.h>
 typedef struct foo
 {
     int f;
@@ -12,7 +13,7 @@ foo eeeew = {0};
 foo* structpoint = 0;
 foo eeeewarray[512] = {0};
 int globalshit = 0;
-
+char srcfile[2048];
 // get globals
 enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientData client_data)
 {
@@ -26,7 +27,7 @@ enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientDat
         const char* f = clang_getCString(filename);
         const char* p = clang_getCString(clang_getCursorSpelling(parent));
 
-        if(strcmp(f, "main.c") == 0 && strcmp(p, "main.c") == 0)
+        if(strcmp(f, srcfile) == 0 && strcmp(p, srcfile) == 0)
         {
             printf("global Type:%s Name:%s clangtype:%s src:%s:%i:%i\n",
                    clang_getCString(clang_getTypeSpelling(clang_getCursorType(cursor))),
@@ -39,13 +40,37 @@ enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientDat
 
     return CXChildVisit_Recurse;
 }
-
-int main()
+int main(int argc, char *argv[])
 {
+    int c;
+
+    while((c = getopt(argc, argv, "f:h")) != -1)
+    {
+        switch(c)
+        {
+            case 'f':
+            {
+                strcpy(srcfile, optarg);
+                break;
+            }
+
+            case 'h':
+            {
+                printf("-f   \n");
+                exit(1);
+                break;
+            }
+
+            default:
+                exit(1);
+                break;
+        }
+    }
+
     CXIndex index = clang_createIndex(0, 0);
     CXTranslationUnit unit = clang_parseTranslationUnit(
                                  index,
-                                 "main.c", 0, 0,
+                                 srcfile, 0, 0,
                                  0, 0,
                                  CXTranslationUnit_None);
 
