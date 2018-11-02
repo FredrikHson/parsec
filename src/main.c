@@ -35,12 +35,15 @@ enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientDat
             {
                 if(modname[i] == '[')
                 {
+                    typename += i;
                     modname[i] = 0;
 
                     if(modname[i - 1] == ' ')
                     {
                         modname[i - 1] = 0;
                     }
+
+                    break;
                 }
             }
 
@@ -48,12 +51,7 @@ enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientDat
 
             if(len != 0)
             {
-                printf("\"array\": \"true\",");
-                printf("\"length\":\"%zu\",", len);
-            }
-            else
-            {
-                printf("\"array\": \"false\",");
+                printf("\"array\":\"%s\",", typename);
             }
 
             printf("\"name\":\"%s\",", clang_getCString(clang_getCursorSpelling(cursor)));
