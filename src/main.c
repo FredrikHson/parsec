@@ -3,16 +3,7 @@
 #include <stdlib.h>
 #include <clang-c/Index.h>
 #include <unistd.h>
-typedef struct foo
-{
-    int f;
-    int d;
-} foo;
 
-foo eeeew = {0};
-foo* structpoint = 0;
-foo eeeewarray[512] = {0};
-int globalshit = 0;
 char srcfile[2048];
 // get globals
 enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientData client_data)
@@ -26,21 +17,57 @@ enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientDat
         clang_getPresumedLocation(loc, &filename, &line, &col);
         const char* f = clang_getCString(filename);
         const char* p = clang_getCString(clang_getCursorSpelling(parent));
+        size_t len = 0;
 
         if(strcmp(f, srcfile) == 0 && strcmp(p, srcfile) == 0)
         {
-            printf("global Type:%s Name:%s clangtype:%s src:%s:%i:%i\n",
-                   clang_getCString(clang_getTypeSpelling(clang_getCursorType(cursor))),
-                   clang_getCString(clang_getCursorSpelling(cursor)),
-                   clang_getCString(clang_getCursorKindSpelling(clang_getCursorKind(cursor))),
+            if(clang_getNumElements(clang_getCursorType(cursor)) != -1)
+            {
+                len = clang_getNumElements(clang_getCursorType(cursor));
+            }
+
+            const char* typename = clang_getCString(clang_getTypeSpelling(clang_getCursorType(cursor)));
+            size_t nlen = strlen(typename) + 1;
+            char* modname = malloc(nlen);
+            memcpy(modname, typename, nlen);
+
+            for(int i = 1; i < nlen - 1; i++)
+            {
+                if(modname[i] == '[')
+                {
+                    modname[i] = 0;
+
+                    if(modname[i - 1] == ' ')
+                    {
+                        modname[i - 1] = 0;
+                    }
+                }
+            }
+
+            printf("{\"type\":\"%s\",", modname);
+
+            if(len != 0)
+            {
+                printf("\"array\": \"true\",");
+                printf("\"length\":\"%zu\",", len);
+            }
+            else
+            {
+                printf("\"array\": \"false\",");
+            }
+
+            printf("\"name\":\"%s\",", clang_getCString(clang_getCursorSpelling(cursor)));
+            printf("\"src\":\"%s\",\"line\":\"%i\",\"col\":\"%i\"}\n",
                    clang_getCString(filename), line, col
                   );
+            free(modname);
         }
     }
 
     return CXChildVisit_Recurse;
 }
-int main(int argc, char *argv[])
+
+int main(int argc, char* argv[])
 {
     int c;
 
