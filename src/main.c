@@ -5,8 +5,9 @@
 #include <unistd.h>
 
 char srcfile[2048];
+char first = 1;
 // get globals
-enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientData client_data)
+enum CXChildVisitResult printchildglobals(CXCursor cursor, CXCursor parent, CXClientData client_data)
 {
     if(clang_getCursorKind(cursor) == CXCursor_VarDecl)
     {
@@ -47,6 +48,15 @@ enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientDat
                 }
             }
 
+            if(first)
+            {
+                first = 0;
+            }
+            else
+            {
+                printf(",\n");
+            }
+
             printf("{\"type\":\"%s\",", modname);
 
             if(len != 0)
@@ -55,7 +65,7 @@ enum CXChildVisitResult printchild(CXCursor cursor, CXCursor parent, CXClientDat
             }
 
             printf("\"name\":\"%s\",", clang_getCString(clang_getCursorSpelling(cursor)));
-            printf("\"src\":\"%s\",\"line\":\"%i\",\"col\":\"%i\"}\n",
+            printf("\"src\":\"%s\",\"line\":\"%i\",\"col\":\"%i\"}",
                    clang_getCString(filename), line, col
                   );
             free(modname);
@@ -106,8 +116,11 @@ int main(int argc, char* argv[])
     }
 
     int level = 0;
+    printf("{\"globals\": [");
     CXCursor cursor = clang_getTranslationUnitCursor(unit);
-    clang_visitChildren(cursor, printchild, 0);
+    first = 1;
+    clang_visitChildren(cursor, printchildglobals, 0);
+    printf("]}\n");
     clang_disposeTranslationUnit(unit);
     clang_disposeIndex(index);
 }
