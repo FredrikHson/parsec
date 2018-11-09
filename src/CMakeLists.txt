@@ -14,7 +14,11 @@ include_directories(
 
 set(CMAKE_C_STANDARD 11)
 
+
 add_executable(${CMAKE_PROJECT_NAME} ${COMMON_SRC})
+target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC "-Werror")
+target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC "-Wall")
+target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC "-Wpedantic")
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     clang
